@@ -40,10 +40,3 @@ foreach (var import in imports)
 @EmptyLine
 @:
 }
-
-@foreach (var enumTemplateModel in Model.EnumTemplateModels) {
-    if (!enumTemplateModel.ModelAsString) {
-    @:@(Include<EnumMethodTemplate, EnumTemplateModel>(new EnumMethodTemplate(), enumTemplateModel))
-}
-@EmptyLine
-}

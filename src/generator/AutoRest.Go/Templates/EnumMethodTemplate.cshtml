@@ -1,35 +1,50 @@
 ﻿@using System.Linq;
 
-@inherits AutoRest.Go.Template<AutoRest.Go.TemplateModels.EnumTemplateModel>
+@inherits AutoRest.Go.Template<AutoRest.Go.TemplateModels.EnumMethodTemplateModel>
 
-@{
-    var uppers = from c in Model.Name where char.IsUpper(c) select char.ToLowerInvariant(c);
+package @Model.PackageName
+
+@EmptyLine
+@Header("// ")
+@EmptyLine
+
+import (
+    "encoding/json"
+    "errors"
+    "fmt"
+)
+
+@EmptyLine
+@foreach (var e in Model.Enums)
+{
+    var uppers = from c in e.Name where char.IsUpper(c) select char.ToLowerInvariant(c);
     var nameVar = new string(uppers.ToArray());
-}
 
-@WrapComment("// ", string.Format("UnmarshalJSON method performs custom unmarshaling for {0} types.", Model.Name))
-func (@nameVar *@Model.Name) UnmarshalJSON(data []byte) (err error) {
-    var ordinal int
-    err = json.Unmarshal(data, &ordinal)
-    if err == nil {
-        switch ordinal {
-        @for (int i = 0; i < Model.Constants.Count; ++i)
-        {
-        @:case @i :
-            @:* @nameVar = @Model.Constants[i].Name
-        }
-        default:
-            err = fmt.Errorf("Cannot unmarshal ordinal value %v for @Model.Name", ordinal)
-        }
-        return err
+@WrapComment("// ", string.Format("UnmarshalJSON method performs custom unmarshaling for {0} types.", e.Name))
+@:
+@:func(@nameVar * @e.Name) UnmarshalJSON(data[]byte)(err error) {
+@:    var ordinal int
+@:    err = json.Unmarshal(data, &ordinal)
+@:    if err == nil {
+@:        switch ordinal {
+    for(int i = 0; i < e.Constants.Count; ++i)
+    {
+@:        case @i:
+@:            *@nameVar = @e.Constants[i].Name
     }
+@:        default:
+@:            err = fmt.Errorf("Cannot unmarshal ordinal value %v for @e.Name", ordinal)
+@:        }
+@:        return err
+@:    }
 @EmptyLine
-    var str string
-    err = json.Unmarshal(data, &str)
-    if err == nil {
-        * @nameVar = @Model.Name (str)
-        return err
-    }
-    return errors.New("Failed to unmarshal value for @Model.Name")
+@:    var str string
+@:    err = json.Unmarshal(data, &str)
+@:    if err == nil {
+@:        *@nameVar = @(e.Name)(str)
+@:        return err
+@:    }
+@:    return errors.New("Failed to unmarshal value for @e.Name")
+@:}
+@EmptyLine
 }
-@EmptyLine

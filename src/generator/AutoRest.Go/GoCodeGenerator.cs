@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
+using System.Linq;
 using System.Threading.Tasks;
 
 using AutoRest.Core;
@@ -88,6 +89,16 @@ namespace AutoRest.Go
                 Model = new ModelsTemplateModel(serviceClient, packageName),
             };
             await Write(modelsTemplate, GoCodeNamer.FormatFileName("models"));
+
+            var enums = modelsTemplate.Model.EnumTemplateModels.Where(em => !em.ModelAsString);
+            if (enums.Any())
+            {
+                var enumMethodsTemplate = new EnumMethodTemplate()
+                {
+                    Model = new EnumMethodTemplateModel(enums, packageName),
+                };
+                await Write(enumMethodsTemplate, GoCodeNamer.FormatFileName("marshaling"));
+            }
 
             // Version
             var versionTemplate = new VersionTemplate

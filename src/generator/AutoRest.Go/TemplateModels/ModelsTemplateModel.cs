@@ -130,12 +130,6 @@ namespace AutoRest.Go.TemplateModels
                 {
                     imports.Add("github.com/Azure/go-autorest/autorest");
                 } 
-                if (EnumTemplateModels.Any(em => !em.ModelAsString))
-                {
-                    imports.Add("encoding/json");
-                    imports.Add("errors");
-                    imports.Add("fmt");
-                }
                 ModelTypes
                     .ForEach(mt =>
                     {
