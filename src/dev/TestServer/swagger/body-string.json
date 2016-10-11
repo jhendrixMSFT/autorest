@@ -278,6 +278,33 @@
         }
       }
     },
+
+    "/string/enum/byOrdinal": {
+      "get": {
+        "operationId": "enum_getByOrdinal",
+        "description": "Get enum value 'blue_color' by ordinal from enumeration of 'red color', 'green-color', 'blue_color'.",
+        "tags": [
+          "String Operations"
+        ],
+        "responses": {
+          "200": {
+            "description": "The String value 'blue_color' by ordinal from enumeration of 'red color', 'green-color', 'blue_color'",
+            "schema": {
+              "x-ms-enum": { "name": "Colors", "modelAsString": false},
+              "type": "string",
+              "enum": [ "red color", "green-color", "blue_color" ]
+            }
+          },
+          "default": {
+            "description": "Unexpected error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+
     "/string/enum/Referenced": {
       "get": {
         "operationId": "enum_getReferenced",

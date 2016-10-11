@@ -197,6 +197,7 @@ var coverage = {
   "getStringNotProvided": 0,
   "getEnumNotExpandable": 0,
   "putEnumNotExpandable":0,
+  "getEnumByOrdinal": 0,
   "putComplexBasicValid": 0,
   "getComplexBasicValid": 0,
   "getComplexBasicEmpty": 0,

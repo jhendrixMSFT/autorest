@@ -86,7 +86,7 @@ var string = function (coverage) {
     coverage['getEnumNotExpandable']++;
     res.status(200).end('"red color"');
   });
-  
+
   router.put('/enum/notExpandable', function (req, res, next) {
     if (req.body === 'red color') {
       coverage['putEnumNotExpandable']++;
@@ -94,46 +94,40 @@ var string = function (coverage) {
     } else {
       utils.send400(res, next, "Did not like enum in the req '" + util.inspect(req.body) + "'");
     }
-	});
-   router.get('/enum/notExpandable', function (req, res, next) {
-    coverage['getEnumNotExpandable']++;
+  });
+
+  router.get('/enum/Referenced', function (req, res, next) {
+    coverage['getEnumReferenced']++;
     res.status(200).end('"red color"');
   });
-  
-  router.put('/enum/notExpandable', function (req, res, next) {
+
+  router.put('/enum/Referenced', function (req, res, next) {
     if (req.body === 'red color') {
-      coverage['putEnumNotExpandable']++;
+      coverage['putEnumReferenced']++;
       res.status(200).end();
     } else {
       utils.send400(res, next, "Did not like enum in the req '" + util.inspect(req.body) + "'");
     }
-    });
-    router.get('/enum/Referenced', function (req, res, next) {
-      coverage['getEnumReferenced']++;
-      res.status(200).end('"red color"');
-    });
+  });
 
-    router.put('/enum/Referenced', function (req, res, next) {
-      if (req.body === 'red color') {
-        coverage['putEnumReferenced']++;
-        res.status(200).end();
-      } else {
-        utils.send400(res, next, "Did not like enum in the req '" + util.inspect(req.body) + "'");
-      }
-    });
-    router.get('/enum/ReferencedConstant', function (req, res, next) {
-      coverage['getEnumReferencedConstant']++;
-      res.status(200).end(JSON.stringify(RefColorConstant));
-    });
+  router.get('/enum/ReferencedConstant', function (req, res, next) {
+    coverage['getEnumReferencedConstant']++;
+    res.status(200).end(JSON.stringify(RefColorConstant));
+  });
 
-    router.put('/enum/ReferencedConstant', function (req, res, next) {
-      if (req.body.ColorConstant === 'green-color') {
-        coverage['putEnumReferencedConstant']++;
-        res.status(200).end();
-      } else {
-        utils.send400(res, next, "Did not like constant in the req '" + util.inspect(req.body) + "'");
-      }
-    });
+  router.put('/enum/ReferencedConstant', function (req, res, next) {
+    if (req.body.ColorConstant === 'green-color') {
+      coverage['putEnumReferencedConstant']++;
+      res.status(200).end();
+    } else {
+      utils.send400(res, next, "Did not like constant in the req '" + util.inspect(req.body) + "'");
+    }
+  });
+
+  router.get('/enum/byOrdinal', function (req, res, next) {
+    coverage['getEnumByOrdinal']++;
+    res.status(200).end('2');
+  });
 }
 
 string.prototype.router = router;

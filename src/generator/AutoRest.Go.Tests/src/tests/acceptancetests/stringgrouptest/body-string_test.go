@@ -127,10 +127,16 @@ func (s *StringSuite) TestPutNullString(c *chk.C) {
 func (s *StringSuite) TestGetNotExpandable(c *chk.C) {
 	str, err := enumClient.GetNotExpandable()
 	c.Assert(err, chk.IsNil)
-	c.Assert(*str.Value, chk.Equals, "red color")
+	c.Assert(str.Value, chk.Equals, Redcolor)
 }
 
 func (s *StringSuite) TestPutNotExpandable(c *chk.C) {
-	_, err := enumClient.PutNotExpandable("red color")
+	_, err := enumClient.PutNotExpandable(Redcolor)
 	c.Assert(err, chk.IsNil)
+}
+
+func (s *StringSuite) TestGetByOrdinal(c *chk.C) {
+	str, err := enumClient.GetByOrdinal()
+	c.Assert(err, chk.IsNil)
+	c.Assert(str.Value, chk.Equals, BlueColor)
 }

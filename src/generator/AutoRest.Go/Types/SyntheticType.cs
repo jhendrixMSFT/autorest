@@ -77,7 +77,10 @@ namespace AutoRest.Go
             }
             else if (elementType is EnumType)
             {
-                Name += "String";
+                if (((EnumType)elementType).ModelAsString)
+                    Name += "String";
+                else
+                    Name += string.Format("{0}Enum", elementType.Name);
             }
             else
             {
