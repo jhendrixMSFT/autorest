@@ -87,7 +87,9 @@ namespace AutoRest.Go.Model
                         mg.ReturnType.Body.AddImports(imports);
                     }
                     if (!string.IsNullOrEmpty(mg.ParameterValidations))
+                    {
                         validationImports = true;
+                    }
                 });
 
             if (validationImports)

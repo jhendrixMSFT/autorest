@@ -32,6 +32,7 @@ namespace AutoRest.Go
             var cmg = cm as CodeModelGo;
 
             SwaggerExtensions.ProcessGlobalParameters(cmg);
+            ParameterGroupExtensionHelper.AddParameterGroups(cmg);
             // Add the current package name as a reserved keyword
             CodeNamerGo.Instance.ReserveNamespace(cm.Namespace);
             FixStutteringTypeNames(cmg);
@@ -98,22 +99,6 @@ namespace AutoRest.Go
             var topLevelNames = new HashSet<string>();
             cmg.ModelTypes
                 .ForEach(mt => topLevelNames.Add(mt.Name));
-
-            // Then, note each enumerated type with one or more conflicting values and collect the values from
-            // those enumerated types without conflicts.  do this on a sorted list to ensure consistent naming
-            cmg.EnumTypes.Cast<EnumTypeGo>().OrderBy(etg => etg.Name.Value)
-                .ForEach(em =>
-                {
-                    if (em.Values.Where(v => topLevelNames.Contains(v.Name) || CodeNamerGo.Instance.UserDefinedNames.Contains(v.Name)).Count() > 0)
-                    {
-                        em.HasUniqueNames = false;
-                    }
-                    else
-                    {
-                        em.HasUniqueNames = true;
-                        topLevelNames.UnionWith(em.Values.Select(ev => ev.Name).ToList());
-                    }
-                });
 
             // add documentation comment if there aren't any
             cmg.EnumTypes.Cast<EnumTypeGo>()
@@ -201,6 +186,7 @@ namespace AutoRest.Go
                 // fix up method return types
                 if (method.ReturnType.Body.ShouldBeSyntheticType())
                 {
+                    // method returns a primitive type, wrap it in a composite type
                     var ctg = new CompositeTypeGo(method.ReturnType.Body);
                     if (wrapperTypes.ContainsKey(ctg.Name))
                     {
@@ -212,6 +198,16 @@ namespace AutoRest.Go
                         cmg.Add(ctg);
                         method.ReturnType = new Response(ctg, method.ReturnType.Headers);
                     }
+                }
+                else if (!((MethodGo)method).HasReturnValue() && method.ReturnType.Headers != null)
+                {
+                    // method has no return body but does return values via headers.  generate a
+                    // wrapper type for it so we'll get convenience methods for the header values
+                    var ctg = new CompositeTypeGo($"{method.MethodGroup.Name}{method.Name}Response");
+                    ctg.IsResponseType = true;
+                    ctg.IsHeaderResponseType = true;
+                    cmg.Add(ctg);
+                    method.ReturnType = new Response(ctg, method.ReturnType.Headers);
                 }
             }
         }

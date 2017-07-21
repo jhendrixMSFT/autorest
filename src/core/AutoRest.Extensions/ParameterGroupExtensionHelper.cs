@@ -70,7 +70,7 @@ namespace AutoRest.Extensions
                     if (specifiedGroupName == null)
                     {
                         string postfix = extensionObject.Value<string>("postfix") ?? "Parameters";
-                        parameterGroupName = methodGroupName + "-" + methodName + "-" + postfix;
+                        parameterGroupName = $"{methodGroupName}{methodName.Capitalize()}{postfix.Capitalize()}";
                     }
                     else
                     {
@@ -137,7 +137,6 @@ namespace AutoRest.Extensions
             {
                 throw new ArgumentNullException("codeModel");
             }
-
             HashSet<CompositeType> generatedParameterGroups = new HashSet<CompositeType>();
 
             foreach (Method method in codeModel.Methods)

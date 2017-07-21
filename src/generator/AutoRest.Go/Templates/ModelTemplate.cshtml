@@ -10,9 +10,17 @@
 type @Model.Name struct {
 @if (Model.IsResponseType)
 {
-    @:autorest.Response `json:"-"`
+    @:autorest.Response `json:"-" xml:"-"`
 }
     @(Model.Fields())
+}
+
+@foreach (var headerResp in Model.ResponseHeaders())
+{
+@:// @(headerResp.Name) returns the value for header @(headerResp.SerializedName).
+@:func (@Model.Name.ToString().ToShortVarName() @Model.Name) @(headerResp.Name)() string {
+    @:return @(Model.Name.ToString().ToShortVarName()).Header.Get("@headerResp.SerializedName")
+@:}
 }
 
 @if (!string.IsNullOrEmpty(Model.NextLink) && Model.PreparerNeeded)
@@ -25,7 +33,7 @@ type @Model.Name struct {
         @:return nil, nil
     @:}
     @:return autorest.Prepare(&http.Request{},
-        @:autorest.AsJSON(),
+        @:autorest.As@(Model.EncodingType)(),
         @:autorest.AsGet(),
         @:autorest.WithBaseURL(to.String(client.@(Model.NextLink))));
 @:}

@@ -113,7 +113,7 @@ func (client @(Model.Owner)) @(Model.PreparerMethodName)(@(Model.MethodParameter
     @:@(Model.QueryMap)
     foreach (var p in Model.OptionalQueryParameters)
     {
-    @:if @(p.ModelType.GetEmptyCheck(p.GetParameterName(),false)) {
+    @:if @(p.ModelType.GetEmptyCheck(p.GetParameterName(), p.IsRequired, false)) {
         @:@(p.AddToMap("queryParameters"))
     @:}
     }
@@ -132,24 +132,38 @@ func (client @(Model.Owner)) @(Model.PreparerMethodName)(@(Model.MethodParameter
 
 @if (Model.BodyParameter != null && !Model.BodyParameter.IsRequired)
 {
-    @:if @(Model.BodyParameter.ModelType.GetEmptyCheck(Model.BodyParameter.Name, false)) {
+    @:if @(Model.BodyParameter.ModelType.GetEmptyCheck(Model.BodyParameter.Name, Model.BodyParameter.IsRequired, false)) {
         @:preparer = autorest.DecoratePreparer(preparer,
-                            @:@(string.Format("autorest.WithJSON({0})", Model.BodyParameter.Name)))
+                            @:@(string.Format("autorest.With{0}({1})", Model.OptionalBodyParamEncoding, Model.GetBodyParamForDecorator())))
     @:}
 }
 
 @foreach (var p in Model.OptionalHeaderParameters)
     {
-    @:if @(p.ModelType.GetEmptyCheck(p.GetParameterName(), false)) {
+    @:if @(p.ModelType.GetEmptyCheck(p.GetParameterName(), p.IsRequired, false)) {
         @:preparer = autorest.DecoratePreparer(preparer,
-                            @:@(string.Format("autorest.WithHeader(\"{0}\",autorest.String({1}))",
+        if (p.IsHeaderCollection)
+        {
+                            @:@(string.Format("autorest.WithHeaderCollection(\"{0}\", {1})",
+                            p.HeaderCollectionPrefix, p.GetParameterName())))
+        }
+        else
+        {
+                            @:@(string.Format("autorest.WithHeader(\"{0}\", autorest.String(*{1}))",
                             p.SerializedName, p.GetParameterName())))
+        }
     @:}
 }
 
-    @(Model.IsLongRunningOperation()
-        ? "return preparer.Prepare(&http.Request{Cancel: cancel})"
-        : "return preparer.Prepare(&http.Request{})")
+@foreach (var p in Model.OptionalGroupedHeaderParams)
+{
+    @:if @(p.ParamName) != nil && @($"{p.ParamName}.{p.FieldName}") != nil {
+        @:preparer = autorest.DecoratePreparer(preparer,
+              @:autorest.WithHeader("@(p.SerializedName)", autorest.String(*@($"{p.ParamName}.{p.FieldName}"))))
+    @:}
+}
+
+    return preparer.Prepare(&http.Request{})
 }
 
 
@@ -175,7 +189,7 @@ func (client @(Model.Owner)) @(Model.SenderMethodName)(req *http.Request) (*http
 func (client @(Model.Owner)) @(Model.ResponderMethodName)(resp *http.Response) (@(Model.MethodReturnSignature(true))) { 
     @if (Model.ReturnValue().Body.IsStreamType())
     {
-    @:result.Value = &resp.Body
+    @:result.Value = resp.Body
     }
     err = autorest.Respond(
             @(rd.EmitAsArguments()))

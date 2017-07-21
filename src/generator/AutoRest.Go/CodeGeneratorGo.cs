@@ -35,6 +35,11 @@ namespace AutoRest.Go
         /// <returns></returns>
         public override async Task Generate(CodeModel cm)
         {
+            var debug = Environment.GetEnvironmentVariable("DEBUG_GOCODEGEN");
+            if (debug != null && debug == "1")
+            {
+                System.Diagnostics.Debugger.Launch();
+            }
 
             var codeModel = cm as CodeModelGo;
             if (codeModel == null)

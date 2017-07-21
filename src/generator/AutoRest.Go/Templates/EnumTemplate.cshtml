@@ -5,7 +5,6 @@
 @inherits AutoRest.Core.Template<AutoRest.Go.Model.EnumTypeGo>
 @{
     var constants = Model.Constants.Keys.OrderBy(v => v);
-    var modelName = CodeNamerGo.Instance.CamelCase(Model.Name);
     var modelPhrase = Model.Name.FixedValue.ToPhrase();
 }
 

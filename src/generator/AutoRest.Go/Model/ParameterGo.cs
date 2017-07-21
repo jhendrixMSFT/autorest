@@ -64,6 +64,10 @@ namespace AutoRest.Go.Model
 
         public virtual bool IsMethodArgument => !IsClientProperty && !IsAPIVersion;
 
+        public string HeaderCollectionPrefix => Extensions.GetValue<string>(SwaggerExtensions.HeaderCollectionPrefix);
+
+        public bool IsHeaderCollection => !string.IsNullOrEmpty(HeaderCollectionPrefix);
+
         /// <summary>
         /// Get Name for parameter for Go map. 
         /// If parameter is client parameter, then return client.<parametername>
@@ -96,24 +100,48 @@ namespace AutoRest.Go.Model
                 ? "client." + CodeNamerGo.Instance.GetPropertyName(Name.Value)
                 : Name.Value;
 
-            var format = IsRequired || ModelType.CanBeEmpty()
-                                          ? "{0}"
-                                          : "*{0}";
+            var format = this.Format();
 
             var s = CollectionFormat != CollectionFormat.None
                                   ? $"{format},\"{CollectionFormat.GetSeparator()}\""
                                   : $"{format}";
 
-            return string.Format(
-                RequiresUrlEncoding()
-                    ? $"autorest.Encode(\"{Location.ToString().ToLower()}\",{s})"
-                    : $"{s}",
-                value);
+            return this.EncodedString(s, value);
+        }
+
+        public override IModelType ModelType
+        {
+            get
+            {
+                if (base.ModelType == null || !IsHeaderCollection)
+                {
+                    return base.ModelType;
+                }
+                return new DictionaryTypeGo(true) { ValueType = base.ModelType, CodeModel = base.ModelType.CodeModel, SupportsAdditionalProperties = false };
+            }
+            set
+            {
+                base.ModelType = value;
+            }
         }
     }
 
     public static class ParameterGoExtensions
     {
+        public static string Format(this ParameterGo parameter)
+        {
+            return parameter.IsRequired || parameter.ModelType.CanBeNull() ? "{0}" : "*{0}";
+        }
+
+        public static string EncodedString(this ParameterGo parameter, string format, string value)
+        {
+            return string.Format(
+                    parameter.RequiresUrlEncoding()
+                        ? $"autorest.Encode(\"{parameter.Location.ToString().ToLower()}\",{format})"
+                        : $"{format}",
+                    value);
+        }
+
         /// <summary>
         /// Return a Go map of required parameters.
         // Refactor -> Generator
@@ -132,12 +160,25 @@ namespace AutoRest.Go.Model
             {
                 builder.AppendLine();
                 var indented = new IndentedStringBuilder("  ");
-                parameters
+                var paramsList = parameters
                     .Where(p => p.IsRequired)
-                    .OrderBy(p => p.SerializedName.ToString())
-                    .ForEach(p => indented.AppendLine("\"{0}\": {1},", p.NameForMap(), p.ValueForMap()));
+                    .OrderBy(p => p.SerializedName.ToString());
+
+                foreach (var p in paramsList)
+                {
+                    if (mapVariable == "queryParameters" && p.IsConstant)
+                    {
+                        indented.AppendLine("\"{0}\": {1},", p.NameForMap(), p.EncodedString(p.Format(), p.DefaultValue));
+                    }
+                    else
+                    {
+                        indented.AppendLine("\"{0}\": {1},", p.NameForMap(), p.ValueForMap());
+                    }
+                }
+
                 builder.Append(indented);
             }
+
             builder.AppendLine("}");
             return builder.ToString();
         }

@@ -14,15 +14,22 @@ namespace AutoRest.Go.Model
     /// </summary>
     public class DictionaryTypeGo : DictionaryType
     {
+        bool _reqValues;
+
         // if value type can be implicitly null
         // then don't emit it as a pointer type.
-        private string FieldNameFormat => ValueType.CanBeNull()
+        private string FieldNameFormat => ValueType.CanBeNull() || _reqValues
                                 ? "map[string]{0}"
                                 : "map[string]*{0}";
 
         public DictionaryTypeGo()
         {
             Name.OnGet += value => string.Format(CultureInfo.InvariantCulture, FieldNameFormat, ValueType.Name);
+        }
+
+        public DictionaryTypeGo(bool reqValues) : this()
+        {
+            _reqValues = reqValues;
         }
 
         /// <summary>

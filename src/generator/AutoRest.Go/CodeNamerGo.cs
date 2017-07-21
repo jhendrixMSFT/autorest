@@ -30,7 +30,8 @@ namespace AutoRest.Go
 
         public virtual IEnumerable<string> StandardImports => new string[] 
         { 
-            PrimaryTypeGo.GetImportLine(package: "github.com/Azure/go-autorest/autorest/azure"), 
+            PrimaryTypeGo.GetImportLine(package: "github.com/Azure/go-autorest/autorest/azure"),
+            PrimaryTypeGo.GetImportLine(package: "context"),
             PrimaryTypeGo.GetImportLine(package: "net/http") 
         };
 
@@ -325,9 +326,7 @@ namespace AutoRest.Go
                 return name;
             }
 
-            // we use the base implementation here as it uses a case-insensitive comparison.
-            // this is a bit of a hacky work-around for some naming changes introduced in core...
-            return EnsureNameCase(PascalCase(RemoveInvalidCharacters(base.GetEscapedReservedName(name, "Group"))));
+            return EnsureNameCase(PascalCase(RemoveInvalidCharacters(name)));
         }
 
         /// <summary>

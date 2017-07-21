@@ -249,6 +249,19 @@ namespace AutoRest.Go
             return IsApiVersionPattern.IsMatch(name);
         }
 
+        public static string ToShortVarName(this string name)
+        {
+            var sb = new StringBuilder();
+            for (int i = 0; i < name.Length; ++i)
+            {
+                if (char.IsUpper(name[i]))
+                {
+                    sb.Append(char.ToLowerInvariant(name[i]));
+                }
+            }
+            return sb.ToString();
+        }
+
         /////////////////////////////////////////////////////////////////////////////////////////
         //
         // Type Extensions
@@ -272,22 +285,6 @@ namespace AutoRest.Go
             return primaryType != null && primaryType.KnownPrimaryType == typeToMatch;
         }
 
-        public static bool CanBeEmpty(this IModelType type)
-        {
-            var dictionaryType = type as DictionaryType;
-            var primaryType = type as PrimaryType;
-            var sequenceType = type as SequenceType;
-            var enumType = type as EnumType;
-
-            return dictionaryType != null
-                || (primaryType != null
-                 && (primaryType.KnownPrimaryType == KnownPrimaryType.ByteArray
-                        || primaryType.KnownPrimaryType == KnownPrimaryType.Stream
-                        || primaryType.KnownPrimaryType == KnownPrimaryType.String))
-                || sequenceType != null
-                || enumType != null;
-        }
-
         /// <summary>
         /// Returns true if the specified type can be implicitly null.
         /// E.g. things like maps, arrays, interfaces etc can all be null.
@@ -307,11 +304,11 @@ namespace AutoRest.Go
                 || sequenceType != null;
         }
 
-        public static string GetEmptyCheck(this IModelType type, string valueReference, bool asEmpty = true)
+        public static string GetEmptyCheck(this IModelType type, string valueReference, bool required, bool asEmpty)
         {
             if (type is PrimaryTypeGo)
             {
-                return (type as PrimaryTypeGo).GetEmptyCheck(valueReference, asEmpty);
+                return (type as PrimaryTypeGo).GetEmptyCheck(valueReference, required, asEmpty);
             }
             else if (type is SequenceTypeGo)
             {
@@ -323,7 +320,7 @@ namespace AutoRest.Go
             }
             else if (type is EnumTypeGo)
             {
-                return (type as EnumTypeGo).GetEmptyCheck(valueReference, asEmpty);
+                return (type as EnumTypeGo).GetEmptyCheck(valueReference, required, asEmpty);
             }
             else
             {
@@ -377,13 +374,11 @@ namespace AutoRest.Go
         /// <param name="p"></param>
         /// <param name="name"></param>
         /// <param name="method"></param>
-        /// <param name="isCompositeProperties"></param>
         /// <returns></returns>
-        public static List<string> ValidateType(this IVariable p, string name, HttpMethod method,
-            bool isCompositeProperties = false)
+        public static List<string> ValidateType(this IVariable p, string name, HttpMethod method)
         {
             List<string> x = new List<string>();
-            if (method != HttpMethod.Patch || !p.IsBodyParameter() || isCompositeProperties)
+            if (method != HttpMethod.Patch || !p.IsBodyParameter())
             {
                 x.AddRange(p.Constraints.Select(c => GetConstraint(name, c.Key.ToString(), c.Value)).ToList());
             }
@@ -391,14 +386,14 @@ namespace AutoRest.Go
             List<string> y = new List<string>();
             if (x.Count > 0)
             {
-                if (p.CheckNull() || isCompositeProperties)
+                if (p.CheckNull())
                     y.AddRange(x.AddChain(name, NullConstraint, p.IsRequired));
                 else
                     y.AddRange(x);
             }
             else
             {
-                if (p.IsRequired && (p.CheckNull() || isCompositeProperties))
+                if (p.IsRequired && p.CheckNull())
                     y.AddNullValidation(name, p.IsRequired);
             }
             return y;
@@ -434,7 +429,7 @@ namespace AutoRest.Go
 
                     if (primary != null || sequence != null || map != null)
                     {
-                        x.AddRange(prop.ValidateType($"{name}.{propName}", method, true));
+                        x.AddRange(prop.ValidateType($"{name}.{propName}", method));
                     }
                     else if (composite != null)
                     {
@@ -506,7 +501,7 @@ namespace AutoRest.Go
         // Check if type is not a null or pointer type.
         public static bool CheckNull(this IVariable p)
         {
-            return p is Parameter && (p.ModelType.IsNullValueType() || !(p.IsRequired || p.ModelType.CanBeEmpty()));
+            return p is Parameter && (p.ModelType.IsNullValueType() || !(p.IsRequired || p.ModelType.CanBeNull()));
         }
 
         /// <summary>

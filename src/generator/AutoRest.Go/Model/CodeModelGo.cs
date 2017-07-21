@@ -119,7 +119,7 @@ namespace AutoRest.Go.Model
                     {
                         declarations.Add(
                                 string.Format(
-                                        (p.IsRequired || p.ModelType.CanBeEmpty() ? "{0} {1}" : "{0} *{1}"),
+                                        (p.IsRequired || p.ModelType.CanBeNull() ? "{0} {1}" : "{0} *{1}"),
                                          p.Name.Value.ToSentence(), p.ModelType.Name));
                     }
                 }
@@ -153,7 +153,7 @@ namespace AutoRest.Go.Model
                     {
                         declarations.Add(
                                 string.Format(
-                                        (p.IsRequired || p.ModelType.CanBeEmpty() ? "{0} {1}" : "{0} *{1}"),
+                                        (p.IsRequired || p.ModelType.CanBeNull() ? "{0} {1}" : "{0} *{1}"),
                                          p.Name.Value.ToSentence(), p.ModelType.Name.Value.ToSentence()));
                     }
                 }

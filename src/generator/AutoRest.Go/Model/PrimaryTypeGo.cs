@@ -124,25 +124,23 @@ namespace AutoRest.Go.Model
             }
         }
 
-        public string GetEmptyCheck(string valueReference, bool asEmpty)
+        public string GetEmptyCheck(string valueReference, bool required, bool asEmpty)
         {
+            var comp = asEmpty ? "==" : "!=";
+            var logiclOp = asEmpty ? "||" : "&&";
+            var deref = required ? string.Empty : "*";
+
             if (this.PrimaryType(KnownPrimaryType.ByteArray))
             {
-                return string.Format(asEmpty
-                                        ? "{0} == nil || len({0}) == 0"
-                                        : "{0} != nil && len({0}) > 0", valueReference);
+                return string.Format("{0} {1} nil {2} len({0}) {1} 0", valueReference, comp, logiclOp);
             }
             else if (this.PrimaryType(KnownPrimaryType.String))
             {
-                return string.Format(asEmpty
-                                        ? "len({0}) == 0"
-                                        : "len({0}) > 0", valueReference);
+                return string.Format("{0} {1} nil {2} len({3}{0}) {1} 0", valueReference, comp, logiclOp, deref);
             }
             else
             {
-                return string.Format(asEmpty
-                                        ? "{0} == nil"
-                                        : "{0} != nil", valueReference);
+                return string.Format("{0} {1} nil", valueReference, comp);
             }
         }
 

@@ -145,6 +145,10 @@ namespace AutoRest.Go.Model
 
         public string ListCompleteMethodName => $"{Name}Complete";
 
+        public string Encoding => CodeModel.ShouldGenerateXmlSerialization ? "XML" : "JSON";
+
+        public string OptionalBodyParamEncoding => BodyParameter.ModelType.PrimaryType(KnownPrimaryType.Stream) ? "File" : Encoding;
+
         /// <summary>
         /// Generate the method parameter declaration.
         /// </summary>
@@ -153,16 +157,15 @@ namespace AutoRest.Go.Model
             get
             {
                 List<string> declarations = new List<string>();
+
+                // add context as first param
+                declarations.Add("ctx context.Context");
+
                 LocalParameters
                     .ForEach(p => declarations.Add(string.Format(
-                                                        p.IsRequired || p.ModelType.CanBeEmpty()
+                                                        p.IsRequired || p.ModelType.CanBeNull()
                                                             ? "{0} {1}"
                                                             : "{0} *{1}", p.Name, p.ModelType.Name)));
-                //for Cancelation channel option for long-running operations
-                if (IsLongRunningOperation())
-                {
-                    declarations.Add("cancel <-chan struct{}");
-                }
                 return string.Join(", ", declarations);
             }
         }
@@ -186,7 +189,16 @@ namespace AutoRest.Go.Model
         {
             get
             {
-                return HasReturnValue() ? ReturnValue().Body.Name.ToString() : "autorest.Response";
+                var rv = ReturnValue();
+                if (rv.Body != null)
+                {
+                    return rv.Body.Name.ToString();
+                }
+                else if (rv.Headers != null)
+                {
+                    return rv.Headers.Name.ToString();
+                }
+                return "autorest.Response";
             }
         }
 
@@ -224,6 +236,7 @@ namespace AutoRest.Go.Model
         public string HelperInvocationParameters(bool complete)
         {
             List<string> invocationParams = new List<string>();
+            invocationParams.Add("ctx");
             foreach (ParameterGo p in LocalParameters)
             {
                 if (p.Name.EqualsIgnoreCase("nextlink") && complete)
@@ -234,10 +247,6 @@ namespace AutoRest.Go.Model
                 {
                     invocationParams.Add(p.Name);
                 }
-            }
-            if (IsLongRunningOperation())
-            {
-                invocationParams.Add("cancel");
             }
             return string.Join(", ", invocationParams);
         }
@@ -251,7 +260,8 @@ namespace AutoRest.Go.Model
             {
                 return
                     Parameters.Cast<ParameterGo>().Where(
-                        p => p != null && p.IsMethodArgument && !string.IsNullOrWhiteSpace(p.Name))
+                        p => p != null && p.IsMethodArgument && !string.IsNullOrWhiteSpace(p.Name) &&
+                        !(p.Location == ParameterLocation.Query && p.IsConstant))
                                 .OrderBy(item => !item.IsRequired);
             }
         }
@@ -312,7 +322,7 @@ namespace AutoRest.Go.Model
 
                 if (BodyParameter != null && !BodyParameter.ModelType.PrimaryType(KnownPrimaryType.Stream))
                 {
-                    decorators.Add("autorest.AsJSON()");
+                    decorators.Add(string.Format("autorest.As{0}()", Encoding));
                 }
 
                 decorators.Add(HTTPMethodDecorator);
@@ -334,7 +344,7 @@ namespace AutoRest.Go.Model
                 {
                     decorators.Add(string.Format(BodyParameter.ModelType.PrimaryType(KnownPrimaryType.Stream) && BodyParameter.Location == ParameterLocation.Body
                                         ? "autorest.WithFile({0})"
-                                        : "autorest.WithJSON({0})",
+                                        : $"autorest.With{Encoding}({{0}})",
                                 BodyParameter.Name));
                 }
 
@@ -367,7 +377,42 @@ namespace AutoRest.Go.Model
                     }
                 }
 
+                decorators.Add("autorest.WithContext(ctx)");
+
                 return decorators;
+            }
+        }
+
+        public class GroupedParamMapping
+        {
+            public string ParamName { get; }
+
+            public string FieldName { get; }
+
+            public string SerializedName { get; }
+
+            public GroupedParamMapping(ParameterTransformation pt)
+            {
+                var mapping = pt.ParameterMappings.Where(p => p.InputParameterProperty == pt.OutputParameter.Name).FirstOrDefault();
+                ParamName = mapping.InputParameter.Name;
+                FieldName = mapping.InputParameterProperty.Capitalize();
+                SerializedName = pt.OutputParameter.SerializedName;
+            }
+        }
+
+        public IEnumerable<GroupedParamMapping> OptionalGroupedHeaderParams
+        {
+            get
+            {
+                var groupedHeaderParams = new List<GroupedParamMapping>(InputParameterTransformation.Count);
+                if (InputParameterTransformation.Count > 0)
+                {
+                    foreach (var transformation in InputParameterTransformation)
+                    {
+                        groupedHeaderParams.Add(new GroupedParamMapping(transformation));
+                    }
+                }
+                return groupedHeaderParams;
             }
         }
 
@@ -396,21 +441,24 @@ namespace AutoRest.Go.Model
             {
                 var decorators = new List<string>();
                 decorators.Add("client.ByInspecting()");
-                decorators.Add(string.Format("azure.WithErrorUnlessStatusCode({0})", string.Join(",", ResponseCodes.ToArray())));
+                decorators.Add(string.Format("azure.WithErrorUnlessStatusCode(autorest.EncodedAs{0}, {1})",
+                    Encoding, string.Join(",", ResponseCodes.ToArray())));
 
-                if (HasReturnValue() && !ReturnValue().Body.IsStreamType())
+                var rvNeedsUnmarshalling = HasReturnValue() && ReturnValue().Body is CompositeTypeGo && !((CompositeTypeGo)ReturnValue().Body).IsHeaderResponseType;
+                if (rvNeedsUnmarshalling && !ReturnValue().Body.IsStreamType())
                 {
-                    if (((CompositeTypeGo)ReturnValue().Body).IsWrapperType)
+                    var rv = ReturnValue().Body as CompositeTypeGo;
+                    if (rv.IsWrapperType && !rv.XmlIsWrapped)
                     {
-                        decorators.Add("autorest.ByUnmarshallingJSON(&result.Value)");
+                        decorators.Add($"autorest.ByUnmarshalling{Encoding}(&result.Value)");
                     }
                     else
                     {
-                        decorators.Add("autorest.ByUnmarshallingJSON(&result)");
+                        decorators.Add($"autorest.ByUnmarshalling{Encoding}(&result)");
                     }
                 }
 
-                if (!HasReturnValue() || !ReturnValue().Body.IsStreamType())
+                if (!rvNeedsUnmarshalling || !ReturnValue().Body.IsStreamType())
                 {
                     decorators.Add("autorest.ByClosing()");
                 }
@@ -578,6 +626,18 @@ namespace AutoRest.Go.Model
                 }
 
                 return nextLink;
+            }
+        }
+
+        public string GetBodyParamForDecorator()
+        {
+            if (BodyParameter.ModelType.XmlIsWrapped)
+            {
+                return $"{BodyParameter.ModelType.XmlName}{{Value: {BodyParameter.Name}}}";
+            }
+            else
+            {
+                return BodyParameter.Name;
             }
         }
     }
