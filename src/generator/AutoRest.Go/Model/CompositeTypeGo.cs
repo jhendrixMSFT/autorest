@@ -278,7 +278,7 @@ namespace AutoRest.Go.Model
                         var headersType = method.ReturnType.Headers as CompositeTypeGo;
                         foreach (var property in headersType.Properties.Cast<PropertyGo>())
                         {
-                            if (property.SerializedName.StartsWithIgnoreCase("x-ms-meta"))
+                            if (property.SerializedName.ToString().StartsWith("x-ms-meta", StringComparison.OrdinalIgnoreCase))
                             {
                                 continue;
                             }

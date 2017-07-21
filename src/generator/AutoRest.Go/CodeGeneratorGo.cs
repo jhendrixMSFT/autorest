@@ -4,7 +4,6 @@
 using AutoRest.Core;
 using AutoRest.Core.Model;
 using AutoRest.Go.Model;
-using AutoRest.Go.Templates;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -53,33 +52,23 @@ namespace AutoRest.Go
             // the correct code, so we need to generate models before clients.
 
             // Models
-            var modelsTemplate = new ModelsTemplate
-            {
-                Model = codeModel
-            };
+            var modelsTemplate = TemplateFactory.Instance.GetModelsTemplate(codeModel);
             await Write(modelsTemplate, FormatFileName("models"));
 
             // Service client
-            var serviceClientTemplate = new ServiceClientTemplate
-            {
-                Model = codeModel
-            };
-
+            var serviceClientTemplate = TemplateFactory.Instance.GetServiceClientTemplate(codeModel);
             await Write(serviceClientTemplate, FormatFileName("client"));
 
             // by convention the methods in the method group with an empty
             // name go into the client template so skip them here.
             foreach (var methodGroup in codeModel.MethodGroups.Where(mg => !string.IsNullOrEmpty(mg.Name)))
             {
-                var methodGroupTemplate = new MethodGroupTemplate
-                {
-                    Model = methodGroup
-                };
+                var methodGroupTemplate = TemplateFactory.Instance.GetMethodGroupTemplate(methodGroup);
                 await Write(methodGroupTemplate, FormatFileName(methodGroup.Name).ToLowerInvariant());
             }
 
             // Version
-            var versionTemplate = new VersionTemplate { Model = codeModel };
+            var versionTemplate = TemplateFactory.Instance.GetVersionTemplate(codeModel);
             await Write(versionTemplate, FormatFileName("version"));
         }
 

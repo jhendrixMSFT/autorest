@@ -1,0 +1,35 @@
+﻿@using AutoRest.Go
+@using AutoRest.Core.Model
+@using AutoRest.Go.Model
+@using AutoRest.Go.Templates
+@using AutoRest.Core.Utilities
+
+@inherits AutoRest.Core.Template<AutoRest.Go.Model.CompositeTypeGo>
+@{
+    var shortName = Model.Name.ToString().ToShortVarName();
+}
+
+@WrapComment("// ", string.Format("{0} is {1}", Model.Name, Model.Documentation.ToSentence()))
+type @Model.Name struct {
+@if (Model.IsResponseType)
+{
+    @:rawResponse *http.Response
+}
+    @(Model.Fields())
+}
+@EmptyLine
+@if (Model.IsResponseType)
+{
+@:// Response returns the raw HTTP response object.
+@:func (@shortName @Model.Name) Response() *http.Response {
+@:    return @(shortName).rawResponse
+@:}
+}
+@EmptyLine
+@foreach (var headerResp in Model.ResponseHeaders())
+{
+@:// @headerResp.Name returns the value for header @(headerResp.SerializedName).
+@:func (@shortName @Model.Name) @(headerResp.Name)() string {
+    @:return @(shortName).rawResponse.Header.Get("@headerResp.SerializedName")
+@:}
+}

@@ -444,7 +444,7 @@ namespace AutoRest.Go.Model
                 decorators.Add(string.Format("azure.WithErrorUnlessStatusCode(autorest.EncodedAs{0}, {1})",
                     Encoding, string.Join(",", ResponseCodes.ToArray())));
 
-                var rvNeedsUnmarshalling = HasReturnValue() && ReturnValue().Body is CompositeTypeGo && !((CompositeTypeGo)ReturnValue().Body).IsHeaderResponseType;
+                var rvNeedsUnmarshalling = ReturnValueRequiresUnmarshalling();
                 if (rvNeedsUnmarshalling && !ReturnValue().Body.IsStreamType())
                 {
                     var rv = ReturnValue().Body as CompositeTypeGo;
@@ -494,6 +494,15 @@ namespace AutoRest.Go.Model
         public bool HasReturnValue()
         {
             return ReturnValue()?.Body != null;
+        }
+
+        /// <summary>
+        /// Returns true if the return type requires unmarshalling.
+        /// </summary>
+        /// <returns></returns>
+        public bool ReturnValueRequiresUnmarshalling()
+        {
+            return HasReturnValue() && ReturnValue().Body is CompositeTypeGo && !((CompositeTypeGo)ReturnValue().Body).IsHeaderResponseType;
         }
 
         /// <summary>

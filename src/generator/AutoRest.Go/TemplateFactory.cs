@@ -1,0 +1,139 @@
+﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License. See License.txt in the project root for license information.
+
+using AutoRest.Core;
+using AutoRest.Go.Model;
+using System;
+
+namespace AutoRest.Go
+{
+    /// <summary>
+    /// Provides factory methods for obtaining templates based on user-supplied version.
+    /// </summary>
+    class TemplateFactory
+    {
+        private enum Version
+        {
+            v1,
+            v2
+        }
+
+        private static TemplateFactory s_instance;
+
+        /// <summary>
+        /// Returns an immutable template factory.
+        /// </summary>
+        public static TemplateFactory Instance
+        {
+            get
+            {
+                if (s_instance == null)
+                {
+                    s_instance = new TemplateFactory();
+                }
+                return s_instance;
+            }
+        }
+
+        private Version _version;
+
+        private TemplateFactory()
+        {
+            // the go-template-ver param is optional so if it wasn't provided default to v1
+            _version = Version.v1;
+            var ver = Settings.Instance.Host?.GetValue<string>("go-template-ver").Result;
+            if (!string.IsNullOrWhiteSpace(ver) && !Enum.TryParse(ver, out _version))
+            {
+                throw new ArgumentException($"bad go template version '{ver}'");
+            }
+        }
+
+        /// <summary>
+        /// Returns a method group template that uses the provided method group model.
+        /// </summary>
+        /// <param name="methodGroup">The method group model that the template will consume.</param>
+        /// <returns>A new instance of a method group template based on the current template version.</returns>
+        public ITemplate GetMethodGroupTemplate(MethodGroupGo methodGroup)
+        {
+            if (methodGroup == null)
+            {
+                throw new ArgumentNullException(nameof(methodGroup));
+            }
+            switch (_version)
+            {
+                case Version.v1:
+                    return new Templates.v1.MethodGroupTemplate() { Model = methodGroup };
+                case Version.v2:
+                    return new Templates.v2.MethodGroupTemplate() { Model = methodGroup };
+                default:
+                    throw new InvalidOperationException($"");
+            }
+        }
+
+        /// <summary>
+        /// Returns a models group template that uses the provided code model.
+        /// </summary>
+        /// <param name="codeModel">The code model that the template will consume.</param>
+        /// <returns>A new instance of a models template based on the current template version.</returns>
+        public ITemplate GetModelsTemplate(CodeModelGo codeModel)
+        {
+            if (codeModel == null)
+            {
+                throw new ArgumentNullException(nameof(codeModel));
+            }
+            switch (_version)
+            {
+                case Version.v1:
+                    return new Templates.v1.ModelsTemplate() { Model = codeModel };
+                case Version.v2:
+                    return new Templates.v2.ModelsTemplate() { Model = codeModel };
+                default:
+                    throw new InvalidOperationException($"");
+            }
+        }
+
+        /// <summary>
+        /// Returns a service client template that uses the provided code model.
+        /// </summary>
+        /// <param name="codeModel">The code model that the template will consume.</param>
+        /// <returns>A new instance of a service client template based on the current template verion.</returns>
+        public ITemplate GetServiceClientTemplate(CodeModelGo codeModel)
+        {
+            if (codeModel == null)
+            {
+                throw new ArgumentNullException(nameof(codeModel));
+            }
+            switch (_version)
+            {
+                case Version.v1:
+                    return new Templates.v1.ServiceClientTemplate() { Model = codeModel };
+                case Version.v2:
+                    return new Templates.v2.ServiceClientTemplate() { Model = codeModel };
+                default:
+                    throw new InvalidOperationException($"");
+            }
+        }
+
+        /// <summary>
+        /// Returns a version template that uses the provided code model.
+        /// </summary>
+        /// <param name="codeModel">The code moel that the template will consume.</param>
+        /// <returns>A new instance of a version template based on the current template version.</returns>
+        public ITemplate GetVersionTemplate(CodeModelGo codeModel)
+        {
+            if (codeModel == null)
+            {
+                throw new ArgumentNullException(nameof(codeModel));
+            }
+            switch (_version)
+            {
+                case Version.v1:
+                    return new Templates.v1.VersionTemplate() { Model = codeModel };
+                case Version.v2:
+                    return new Templates.v2.VersionTemplate() { Model = codeModel };
+                default:
+                    throw new InvalidOperationException($"");
+            }
+        }
+    }
+}

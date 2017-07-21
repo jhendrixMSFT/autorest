@@ -1,0 +1,53 @@
+﻿@using AutoRest.Go
+@using AutoRest.Core.Model
+@using AutoRest.Go.Templates
+@using AutoRest.Go.Model
+@using AutoRest.Core.Utilities
+@using System.Linq
+
+@inherits AutoRest.Core.Template<AutoRest.Go.Model.CodeModelGo>
+
+@WrapComment("// ", Model.GetDocumentation())
+package @Model.Namespace
+@EmptyLine
+@Header("// ")
+
+@EmptyLine
+import (
+    "net/url"
+    "github.com/Azure/go-autorest/autorest/requestpolicy"
+)
+
+@EmptyLine
+const (
+    ServiceVersion = "@(Model.ApiVersion)"
+)
+
+@EmptyLine
+@WrapComment("// ", Model.ClientDocumentation)
+type @(Model.BaseClient) struct {
+    url *url.URL
+    rpm requestpolicy.Manager
+}
+
+@EmptyLine
+@WrapComment("// ", string.Format("New creates an instance of the {0} client.", Model.BaseClient))
+func New@(Model.BaseClient)(url url.URL, rpm requestpolicy.Manager) @(Model.BaseClient) {
+    return @(Model.BaseClient){
+        url: &url,
+        rpm: rpm,
+    }
+}
+
+@EmptyLine
+@WrapComment("// ", "URL returns a copy of the URL for this client.")
+func (@(Model.BaseClient.ToShortVarName()) @(Model.BaseClient)) URL() *url.URL {
+    url := *mc.url
+    return &url
+}
+
+@EmptyLine
+@WrapComment("// ", "RequestPolicyManager returns the policy manager for this client.")
+func (@(Model.BaseClient.ToShortVarName()) @(Model.BaseClient)) RequestPolicyManager() requestpolicy.Manager {
+    return mc.rpm
+}

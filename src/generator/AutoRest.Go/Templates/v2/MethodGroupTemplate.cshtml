@@ -1,0 +1,44 @@
+﻿@using System;
+@using System.Collections.Generic;
+@using System.Linq;
+@using AutoRest.Core.Utilities;
+@using AutoRest.Go
+@using AutoRest.Go.Model
+@using AutoRest.Go.Templates
+
+@inherits AutoRest.Core.Template<AutoRest.Go.Model.MethodGroupGo>
+@{
+    var methods = new List<MethodGo>();
+    Model.Methods.Cast<MethodGo>().OrderBy(m => m.Name.Value).ForEach(m => methods.Add(m));
+}
+
+package @Model.PackageName
+@EmptyLine
+@Header("// ")
+
+@EmptyLine
+
+import (
+@foreach (var import in Model.Imports)
+{
+    @:@(import)
+}
+)
+@EmptyLine
+
+@WrapComment("// ", Model.Documentation)
+type @(Model.ClientName) struct {
+    @(Model.BaseClient)
+}
+
+@WrapComment("// ", string.Format("New{0} creates an instance of the {0} client.", Model.ClientName))
+func New@(Model.ClientName)(url *url.URL, rpm requestpolicy.Manager) @(Model.ClientName) {
+    return @(Model.ClientName){New@(Model.BaseClient)(*url, rpm)}
+}
+@EmptyLine
+
+@foreach (var method in methods)
+{
+@:@(Include(new MethodTemplate(), method))
+@:@EmptyLine
+}
