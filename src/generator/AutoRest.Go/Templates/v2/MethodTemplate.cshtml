@@ -29,7 +29,7 @@ func (client @(Model.Owner)) @(Model.MethodSignature) (@Model.MethodReturnSignat
 @:}
 @:@EmptyLine
 }
-	req, err := client.@(opIdCamelCase)Preparer()
+	req, err := client.@(opIdCamelCase)Preparer(@(Model.HelperInvocationParameters(false, false)))
 	if err != nil {
 		return
 	}
@@ -46,7 +46,7 @@ func (client @(Model.Owner)) @(Model.MethodSignature) (@Model.MethodReturnSignat
 
 @EmptyLine
 // @(opIdCamelCase)Preparer prepares the @(Model.Name) request.
-func (client @(Model.Owner)) @(opIdCamelCase)Preparer(@(Model.MethodParametersSignature)) (req requestpolicy.Request, err error) {
+func (client @(Model.Owner)) @(opIdCamelCase)Preparer(@(Model.MethodParametersSignature(false))) (req requestpolicy.Request, err error) {
 	req, err = requestpolicy.NewRequest("@(Model.HttpMethod.ToString().ToUpperInvariant())", *client.url, requestpolicy.NewRequestOptions{})
 	if err != nil {
 		return
@@ -55,28 +55,34 @@ func (client @(Model.Owner)) @(opIdCamelCase)Preparer(@(Model.MethodParametersSi
     params := req.URL.Query()
 @foreach(var qp in Model.QueryParameters)
 {
+    var val = qp.ModelType.IsPrimaryType(KnownPrimaryType.String) ? qp.ValueForMap(false) : $"autorest.String({qp.ValueForMap(false)})";
     if (qp.IsRequired)
     {
-    @:params.Add("@(qp.Name)", @(qp.DefaultValue))
+    @:params.Add("@(qp.NameForMap())", @(qp.IsConstant ? qp.DefaultValue.ToString() : val))
     }
     else
     {
     @:if @qp.Name != nil {
-        @:params.Add("@(qp.Name)", *@(qp.Name))
+        @:params.Add("@(qp.NameForMap())", @(val))
     @:}
     }
 }
 
 @foreach (var hp in Model.HeaderParameters)
 {
+    var val = hp.ModelType.IsPrimaryType(KnownPrimaryType.String) ? hp.ValueForMap(false) : $"autorest.String({hp.ValueForMap(false)})";
     if (hp.IsRequired)
     {
-    @:req.AddHeader("@(hp.SerializedName)", @(hp.Name))
+        if (hp.IsAPIHeader)
+        {
+            val = "ServiceVersion";
+        }
+    @:req.AddHeader("@(hp.SerializedName)", @val)
     }
     else
     {
-    @:if @hp.Name != nil && len(*@(hp.Name)) != 0 {
-        @:req.AddHeader("@(hp.SerializedName)", *@hp.Name)
+    @:if @hp.Name != nil {
+        @:req.AddHeader("@(hp.SerializedName)", @val)
     @:}
     }
 }
@@ -85,8 +91,7 @@ func (client @(Model.Owner)) @(opIdCamelCase)Preparer(@(Model.MethodParametersSi
 }
 
 @EmptyLine
-// @(opIdCamelCase)Responder handles the response to the @(Model.Name) request. The method always
-// closes the http.Response Body.
+// @(opIdCamelCase)Responder handles the response to the @(Model.Name) request.
 func (client @(Model.Owner)) @(opIdCamelCase)Responder(resp requestpolicy.Response) (requestpolicy.Response, error) { 
 	if err := requestpolicy.ValidateResponse(resp, @(string.Join(",", Model.ResponseCodes.ToArray()))); err != nil {
 		return resp, err

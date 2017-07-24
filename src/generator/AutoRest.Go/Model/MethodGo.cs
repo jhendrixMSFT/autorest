@@ -78,17 +78,17 @@ namespace AutoRest.Go.Model
             }
         }
 
-        public string MethodSignature => $"{Name}({MethodParametersSignature})";
+        public string MethodSignature => $"{Name}({MethodParametersSignature()})";
         
         public string MethodParametersSignatureComplete
         {
             get
             {     
                 var signature = new StringBuilder("(");
-                signature.Append(MethodParametersSignature);
+                signature.Append(MethodParametersSignature());
                 if (!IsLongRunningOperation())
                 {
-                    if (MethodParametersSignature.Length > 0)
+                    if (MethodParametersSignature().Length > 0)
                     {
                         signature.Append( ", ");
                     }
@@ -152,22 +152,22 @@ namespace AutoRest.Go.Model
         /// <summary>
         /// Generate the method parameter declaration.
         /// </summary>
-        public string MethodParametersSignature
+        public string MethodParametersSignature(bool includeCtx = true)
         {
-            get
-            {
-                List<string> declarations = new List<string>();
+            List<string> declarations = new List<string>();
 
+            if (includeCtx)
+            {
                 // add context as first param
                 declarations.Add("ctx context.Context");
-
-                LocalParameters
-                    .ForEach(p => declarations.Add(string.Format(
-                                                        p.IsRequired || p.ModelType.CanBeNull()
-                                                            ? "{0} {1}"
-                                                            : "{0} *{1}", p.Name, p.ModelType.Name)));
-                return string.Join(", ", declarations);
             }
+
+            LocalParameters
+                .ForEach(p => declarations.Add(string.Format(
+                                                    p.IsRequired || p.ModelType.CanBeNull()
+                                                        ? "{0} {1}"
+                                                        : "{0} *{1}", p.Name, p.ModelType.Name)));
+            return string.Join(", ", declarations);
         }
 
         /// <summary>
@@ -233,10 +233,13 @@ namespace AutoRest.Go.Model
 
         public string ResponderMethodName => $"{Name}Responder";
 
-        public string HelperInvocationParameters(bool complete)
+        public string HelperInvocationParameters(bool complete, bool includeCtx = true)
         {
             List<string> invocationParams = new List<string>();
-            invocationParams.Add("ctx");
+            if (includeCtx)
+            {
+                invocationParams.Add("ctx");
+            }
             foreach (ParameterGo p in LocalParameters)
             {
                 if (p.Name.EqualsIgnoreCase("nextlink") && complete)

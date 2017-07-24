@@ -62,6 +62,8 @@ namespace AutoRest.Go.Model
 
         public virtual bool IsAPIVersion => SerializedName.Value.IsApiVersion();
 
+        public virtual bool IsAPIHeader => SerializedName.Value.IsApiHeader();
+
         public virtual bool IsMethodArgument => !IsClientProperty && !IsAPIVersion;
 
         public string HeaderCollectionPrefix => Extensions.GetValue<string>(SwaggerExtensions.HeaderCollectionPrefix);
@@ -89,7 +91,7 @@ namespace AutoRest.Go.Model
         /// Return formatted value string for the parameter.
         /// </summary>
         /// <returns></returns>
-        public string ValueForMap()
+        public string ValueForMap(bool encode = true)
         {
             if (IsAPIVersion)
             {
@@ -106,7 +108,14 @@ namespace AutoRest.Go.Model
                                   ? $"{format},\"{CollectionFormat.GetSeparator()}\""
                                   : $"{format}";
 
-            return this.EncodedString(s, value);
+            if (encode)
+            {
+                return this.EncodedString(s, value);
+            }
+            else
+            {
+                return string.Format(s, value);
+            }
         }
 
         public override IModelType ModelType

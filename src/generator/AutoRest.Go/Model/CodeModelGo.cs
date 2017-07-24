@@ -89,10 +89,7 @@ namespace AutoRest.Go.Model
             {
                 // Create an ordered union of the imports each model requires
                 var imports = new HashSet<string>();
-                if (ModelTypes != null && ModelTypes.Cast<CompositeTypeGo>().Any(mtm => mtm.IsResponseType))
-                {
-                    imports.Add(PrimaryTypeGo.GetImportLine("github.com/Azure/go-autorest/autorest"));
-                }
+                imports.Add(PrimaryTypeGo.GetImportLine(package: "net/http"));
                 ModelTypes.Cast<CompositeTypeGo>()
                     .ForEach(mt =>
                     {

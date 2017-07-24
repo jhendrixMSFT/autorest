@@ -101,7 +101,7 @@ namespace AutoRest.Go.Model
                         return "int64";
 
                     case KnownPrimaryType.Stream:
-                        return "io.ReadCloser";
+                        return "io.ReadSeeker";
 
                     case KnownPrimaryType.String:
                         return "string";

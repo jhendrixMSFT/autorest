@@ -249,6 +249,11 @@ namespace AutoRest.Go
             return IsApiVersionPattern.IsMatch(name);
         }
 
+        public static bool IsApiHeader(this string name)
+        {
+            return string.Compare(name, "x-ms-version", StringComparison.OrdinalIgnoreCase) == 0;
+        }
+
         public static string ToShortVarName(this string name)
         {
             var sb = new StringBuilder();

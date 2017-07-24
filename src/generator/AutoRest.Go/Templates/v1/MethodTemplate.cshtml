@@ -92,7 +92,7 @@ else
 
 @EmptyLine
 // @(Model.PreparerMethodName) prepares the @(Model.Name) request.
-func (client @(Model.Owner)) @(Model.PreparerMethodName)(@(Model.MethodParametersSignature)) (*http.Request, error) {
+func (client @(Model.Owner)) @(Model.PreparerMethodName)(@(Model.MethodParametersSignature()) (*http.Request, error) {
 @if (Model.IsCustomBaseUri && Model.URLParameters.Any())
 {
     @:@(Model.URLMap)
