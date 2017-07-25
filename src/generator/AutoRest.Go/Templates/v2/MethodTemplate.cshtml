@@ -82,7 +82,14 @@ func (client @(Model.Owner)) @(opIdCamelCase)Preparer(@(Model.MethodParametersSi
     else
     {
     @:if @hp.Name != nil {
+        if (!hp.IsCustomMetadata)
+        {
         @:req.AddHeader("@(hp.SerializedName)", @val)
+        }
+        else
+        {
+        @:req.AddHeadersWithPrefix("x-ms-meta-", @hp.ValueForMap(false))
+        }
     @:}
     }
 }

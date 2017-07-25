@@ -5,6 +5,7 @@ using AutoRest.Core.Utilities;
 using AutoRest.Core.Model;
 using AutoRest.Extensions;
 using AutoRest.Extensions.Azure;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -69,6 +70,8 @@ namespace AutoRest.Go.Model
         public string HeaderCollectionPrefix => Extensions.GetValue<string>(SwaggerExtensions.HeaderCollectionPrefix);
 
         public bool IsHeaderCollection => !string.IsNullOrEmpty(HeaderCollectionPrefix);
+
+        public bool IsCustomMetadata => SerializedName.Value.StartsWith("x-ms-meta", StringComparison.OrdinalIgnoreCase);
 
         /// <summary>
         /// Get Name for parameter for Go map. 
