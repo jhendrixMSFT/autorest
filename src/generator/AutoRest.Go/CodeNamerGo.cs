@@ -29,7 +29,7 @@ namespace AutoRest.Go
         public virtual IEnumerable<string> AutorestImports => new string[]
         {
             PrimaryTypeGo.GetImportLine(package: "github.com/Azure/go-autorest/autorest"),
-            PrimaryTypeGo.GetImportLine(package: "github.com/Azure/go-autorest/autorest/requestpolicy")
+            PrimaryTypeGo.GetImportLine(package: "github.com/Azure/requestpolicy-go/requestpolicy")
         };
 
         public virtual IEnumerable<string> StandardImports => new string[] 

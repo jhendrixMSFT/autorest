@@ -109,12 +109,17 @@ namespace AutoRest.Go.Model
                 }
             }
 
-            // add the wrapped type as a property named Value
-            var p = new PropertyGo();
-            p.Name = "Value";
-            p.SerializedName = "value";
-            p.ModelType = wrappedType;
-            Add(p);
+            // don't add the Value field for streams as it just duplicates
+            // the response.Body field and doesn't provide any value.
+            if (!wrappedType.IsPrimaryType(KnownPrimaryType.Stream))
+            {
+                // add the wrapped type as a property named Value
+                var p = new PropertyGo();
+                p.Name = "Value";
+                p.SerializedName = "value";
+                p.ModelType = wrappedType;
+                Add(p);
+            }
 
             _wrapper = true;
         }
