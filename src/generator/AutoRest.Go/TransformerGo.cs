@@ -205,7 +205,6 @@ namespace AutoRest.Go
                     // wrapper type for it so we'll get convenience methods for the header values
                     var ctg = new CompositeTypeGo($"{method.MethodGroup.Name}{method.Name}Response");
                     ctg.IsResponseType = true;
-                    ctg.IsHeaderResponseType = true;
                     cmg.Add(ctg);
                     method.ReturnType = new Response(ctg, method.ReturnType.Headers);
                 }

@@ -55,7 +55,7 @@ func (client @(Model.Owner)) @(opIdCamelCase)Preparer(@(Model.MethodParametersSi
     params := req.URL.Query()
 @foreach(var qp in Model.QueryParameters)
 {
-    var val = qp.ModelType.IsPrimaryType(KnownPrimaryType.String) ? qp.ValueForMap(false) : $"autorest.String({qp.ValueForMap(false)})";
+    var val = qp.ModelType.IsPrimaryType(KnownPrimaryType.String) ? qp.ValueForMap(false) : $"fmt.Sprintf(\"%v\", {qp.ValueForMap(false)})";
     if (qp.IsRequired)
     {
     @:params.Add("@(qp.NameForMap())", @(qp.IsConstant ? qp.DefaultValue.ToString() : val))
@@ -70,7 +70,7 @@ func (client @(Model.Owner)) @(opIdCamelCase)Preparer(@(Model.MethodParametersSi
     req.URL.RawQuery = params.Encode()
 @foreach (var hp in Model.HeaderParameters)
 {
-    var val = hp.ModelType.IsPrimaryType(KnownPrimaryType.String) ? hp.ValueForMap(false) : $"autorest.String({hp.ValueForMap(false)})";
+    var val = hp.ModelType.IsPrimaryType(KnownPrimaryType.String) ? hp.ValueForMap(false) : $"fmt.Sprintf(\"%v\", {hp.ValueForMap(false)})";
     if (hp.IsRequired)
     {
         if (hp.IsAPIHeader)
@@ -95,7 +95,7 @@ func (client @(Model.Owner)) @(opIdCamelCase)Preparer(@(Model.MethodParametersSi
 }
 @if (Model.BodyParameter != null && !Model.BodyParameter.ModelType.PrimaryType(KnownPrimaryType.Stream))
 {
-    @:err = req.MarshalBody(requestpolicy.Content@(Model.Encoding), @Model.GetBodyParamForDecorator())
+    @:err = req.MarshalBody(requestpolicy.Content@(Model.Encoding.ToUpperInvariant()), @Model.GetBodyParamForDecorator())
 }
 else if (Model.BodyParameter != null && Model.BodyParameter.ModelType.PrimaryType(KnownPrimaryType.Stream))
 {
@@ -108,15 +108,27 @@ else if (Model.BodyParameter != null && Model.BodyParameter.ModelType.PrimaryTyp
 
 @EmptyLine
 // @(opIdCamelCase)Responder handles the response to the @(Model.Name) request.
-func (client @(Model.Owner)) @(opIdCamelCase)Responder(resp requestpolicy.Response) (requestpolicy.Response, error) { 
-	if err := requestpolicy.ValidateResponse(resp, @(string.Join(",", Model.ResponseCodes.ToArray()))); err != nil {
+func (client @(Model.Owner)) @(opIdCamelCase)Responder(resp requestpolicy.Response) (requestpolicy.Response, error) {
+    var err error
+@if (Model.ReturnValueRequiresUnmarshalling())
+{
+    @:defer func() {
+        @:if cerr := resp.Response().Body.Close(); cerr != nil && err == nil {
+            @:err = cerr
+        @:}
+    @:}()
+}
+	if err = requestpolicy.ValidateResponse(resp, @(string.Join(",", Model.ResponseCodes.ToArray()))); err != nil {
 		return resp, err
 	}
-
 	result := @(Model.MethodReturnType){rawResponse: resp.Response()}
 @if (Model.ReturnValueRequiresUnmarshalling())
 {
-    @:err := autorest.Unmarshal@(Model.Encoding)(resp.Response(), &result)
+    @:b, err := ioutil.ReadAll(resp.Response().Body)
+    @:if err != nil {
+        @:return resp, err
+    @:}
+    @:err = @(Model.Encoding).Unmarshal(b, &result)
     @:if err != nil {
         @:return resp, err
     @:}

@@ -20,8 +20,6 @@ namespace AutoRest.Go.Model
         // True if the type is returned by a method
         public bool IsResponseType;
 
-        public bool IsHeaderResponseType;
-
         // Name of the field containing the URL used to retrieve the next result set
         // (null or empty if the model is not paged).
         public string NextLink;

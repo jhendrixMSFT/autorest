@@ -145,7 +145,7 @@ namespace AutoRest.Go.Model
 
         public string ListCompleteMethodName => $"{Name}Complete";
 
-        public string Encoding => CodeModel.ShouldGenerateXmlSerialization ? "XML" : "JSON";
+        public string Encoding => CodeModel.ShouldGenerateXmlSerialization ? "xml" : "json";
 
         public string OptionalBodyParamEncoding => BodyParameter.ModelType.PrimaryType(KnownPrimaryType.Stream) ? "File" : Encoding;
 
@@ -505,7 +505,7 @@ namespace AutoRest.Go.Model
         /// <returns></returns>
         public bool ReturnValueRequiresUnmarshalling()
         {
-            return HasReturnValue() && ReturnValue().Body is CompositeTypeGo && !((CompositeTypeGo)ReturnValue().Body).IsHeaderResponseType;
+            return HasReturnValue() && ReturnValue().Body is CompositeTypeGo && ((CompositeTypeGo)ReturnValue().Body).Properties.Any();
         }
 
         /// <summary>

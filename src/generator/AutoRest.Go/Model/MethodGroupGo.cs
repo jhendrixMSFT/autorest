@@ -77,6 +77,7 @@ namespace AutoRest.Go.Model
             imports.UnionWith(CodeNamerGo.Instance.StandardImports);
 
             bool validationImports = false;
+            bool unmarshalImports = false;
             cmg.Methods.Where(m => m.Group.Value == Name)
                 .ForEach(m =>
                 {
@@ -90,11 +91,22 @@ namespace AutoRest.Go.Model
                     {
                         validationImports = true;
                     }
+                    if (mg.ReturnValueRequiresUnmarshalling())
+                    {
+                        unmarshalImports = true;
+                    }
                 });
 
             if (validationImports)
             {
                 imports.UnionWith(CodeNamerGo.Instance.ValidationImport);
+            }
+
+            if (unmarshalImports)
+            {
+                imports.Add(PrimaryTypeGo.GetImportLine(package: "io/ioutil"));
+                var encoding = CodeModel.ShouldGenerateXmlSerialization ? "xml" : "json";
+                imports.Add(PrimaryTypeGo.GetImportLine(package: $"encoding/{encoding}"));
             }
 
             foreach (var p in cmg.Properties)
