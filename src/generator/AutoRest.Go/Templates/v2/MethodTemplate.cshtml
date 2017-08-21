@@ -23,7 +23,7 @@
 func (client @(Model.Owner)) @(Model.MethodSignature) (@Model.MethodReturnSignature(false)) {
 @if (Model.ParameterValidations.Length > 0)
 {
-    @:if err := validation.Validate([]validation.Validation{
+    @:if err := validate([]validation{
     @:@(Model.ParameterValidations)}); err != nil {
     @:return result, @(Model.ValidationError)
 @:}
@@ -55,40 +55,40 @@ func (client @(Model.Owner)) @(opIdCamelCase)Preparer(@(Model.MethodParametersSi
     params := req.URL.Query()
 @foreach(var qp in Model.QueryParameters)
 {
-    var val = qp.ModelType.IsPrimaryType(KnownPrimaryType.String) ? qp.ValueForMap(false) : $"fmt.Sprintf(\"%v\", {qp.ValueForMap(false)})";
+    var val = qp.ModelType.GetStringFormat(qp.ValueForMap(false), qp.IsRequired);
     if (qp.IsRequired)
     {
-    @:params.Add("@(qp.NameForMap())", @(qp.IsConstant ? qp.DefaultValue.ToString() : val))
+    @:params.Set("@(qp.NameForMap())", @(qp.IsConstant ? qp.DefaultValue.ToString() : val))
     }
     else
     {
     @:if @qp.Name != nil {
-        @:params.Add("@(qp.NameForMap())", @(val))
+        @:params.Set("@(qp.NameForMap())", @(val))
     @:}
     }
 }
     req.URL.RawQuery = params.Encode()
 @foreach (var hp in Model.HeaderParameters)
 {
-    var val = hp.ModelType.IsPrimaryType(KnownPrimaryType.String) ? hp.ValueForMap(false) : $"fmt.Sprintf(\"%v\", {hp.ValueForMap(false)})";
+    var val = hp.ModelType.GetStringFormat(hp.ValueForMap(false), hp.IsRequired);
     if (hp.IsRequired)
     {
         if (hp.IsAPIHeader)
         {
             val = "ServiceVersion";
         }
-    @:req.AddHeader("@(hp.SerializedName)", @val)
+    @:req.SetHeader("@(hp.SerializedName)", @val)
     }
     else
     {
     @:if @hp.Name != nil {
         if (!hp.IsCustomMetadata)
         {
-        @:req.AddHeader("@(hp.SerializedName)", @val)
+        @:req.SetHeader("@(hp.SerializedName)", @val)
         }
         else
         {
-        @:req.AddHeadersWithPrefix("x-ms-meta-", @hp.ValueForMap(false))
+        @:req.SetHeadersWithPrefix("x-ms-meta-", @hp.ValueForMap(false))
         }
     @:}
     }

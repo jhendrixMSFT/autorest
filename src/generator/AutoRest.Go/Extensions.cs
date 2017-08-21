@@ -16,9 +16,9 @@ namespace AutoRest.Go
 {
     public static class Extensions
     {
-        public const string NullConstraint = "Null";
+        public const string NullConstraint = "null";
 
-        public const string ReadOnlyConstraint = "ReadOnly";
+        public const string ReadOnlyConstraint = "readOnly";
 
         private static readonly Regex IsApiVersionPattern = new Regex(@"^api[^a-zA-Z0-9_]?version", RegexOptions.IgnoreCase);
 
@@ -361,6 +361,26 @@ namespace AutoRest.Go
             return (type is PrimaryType || type is SequenceType || type is DictionaryType || type is EnumType);
         }
 
+        public static string GetStringFormat(this IModelType type, string defaultFormat, bool required)
+        {
+            if (type.IsPrimaryType(KnownPrimaryType.String))
+            {
+                return defaultFormat;
+            }
+            else if (type.IsPrimaryType(KnownPrimaryType.DateTimeRfc1123))
+            {
+                if (!required)
+                {
+                    defaultFormat = $"({defaultFormat})";
+                }
+                return $"{defaultFormat}.Format(time.RFC1123)";
+            }
+            else
+            {
+                return $"fmt.Sprintf(\"%v\", {defaultFormat})";
+            }
+        }
+
         /////////////////////////////////////////////////////////////////////////////////////////
         // Validate code
         //
@@ -492,7 +512,7 @@ namespace AutoRest.Go
             List<string> a = new List<string>
             {
                 GetConstraint(name, constraint, $"{isRequired}".ToLower(), true),
-                $"Chain: []validation.Constraint{{{x[0]}"
+                $"chain: []constraint{{{x[0]}"
             };
             a.AddRange(x.GetRange(1, x.Count - 1));
             a.Add("}}");
@@ -550,9 +570,9 @@ namespace AutoRest.Go
                                           ? $"`{constraintValue}`"
                                           : constraintValue;
             return string.Format(chain
-                                    ? "\t{{Target: \"{0}\", Name: validation.{1}, Rule: {2} "
-                                    : "\t{{Target: \"{0}\", Name: validation.{1}, Rule: {2}, Chain: nil }}",
-                                    name, constraintName, value);
+                                    ? "\t{{target: \"{0}\", name: {1}, rule: {2} "
+                                    : "\t{{target: \"{0}\", name: {1}, rule: {2}, chain: nil }}",
+                                    name, constraintName.ToCamelCase(), value);
         }
     }
 }

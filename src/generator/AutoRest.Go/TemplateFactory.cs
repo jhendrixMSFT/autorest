@@ -12,7 +12,7 @@ namespace AutoRest.Go
     /// </summary>
     class TemplateFactory
     {
-        private enum Version
+        public enum Version
         {
             v1,
             v2
@@ -35,17 +35,18 @@ namespace AutoRest.Go
             }
         }
 
-        private Version _version;
+        public Version TemplateVersion { get; private set; }
 
         private TemplateFactory()
         {
             // the go-template-ver param is optional so if it wasn't provided default to v1
-            _version = Version.v1;
+            var version = Version.v1;
             var ver = Settings.Instance.Host?.GetValue<string>("go-template-ver").Result;
-            if (!string.IsNullOrWhiteSpace(ver) && !Enum.TryParse(ver, out _version))
+            if (!string.IsNullOrWhiteSpace(ver) && !Enum.TryParse(ver, out version))
             {
                 throw new ArgumentException($"bad go template version '{ver}'");
             }
+            TemplateVersion = version;
         }
 
         /// <summary>
@@ -59,7 +60,7 @@ namespace AutoRest.Go
             {
                 throw new ArgumentNullException(nameof(methodGroup));
             }
-            switch (_version)
+            switch (TemplateVersion)
             {
                 case Version.v1:
                     return new Templates.v1.MethodGroupTemplate() { Model = methodGroup };
@@ -81,7 +82,7 @@ namespace AutoRest.Go
             {
                 throw new ArgumentNullException(nameof(codeModel));
             }
-            switch (_version)
+            switch (TemplateVersion)
             {
                 case Version.v1:
                     return new Templates.v1.ModelsTemplate() { Model = codeModel };
@@ -103,7 +104,7 @@ namespace AutoRest.Go
             {
                 throw new ArgumentNullException(nameof(codeModel));
             }
-            switch (_version)
+            switch (TemplateVersion)
             {
                 case Version.v1:
                     return new Templates.v1.ServiceClientTemplate() { Model = codeModel };
@@ -125,7 +126,7 @@ namespace AutoRest.Go
             {
                 throw new ArgumentNullException(nameof(codeModel));
             }
-            switch (_version)
+            switch (TemplateVersion)
             {
                 case Version.v1:
                     return new Templates.v1.VersionTemplate() { Model = codeModel };

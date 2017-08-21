@@ -44,11 +44,14 @@ namespace AutoRest.Go.Model
                 switch (KnownPrimaryType)
                 {
                     case KnownPrimaryType.Date:
-                        return GetImportLine(package: "github.com/Azure/go-autorest/autorest/date");
                     case KnownPrimaryType.DateTimeRfc1123:
-                        return GetImportLine(package: "github.com/Azure/go-autorest/autorest/date");
                     case KnownPrimaryType.DateTime:
-                        return GetImportLine(package: "github.com/Azure/go-autorest/autorest/date");
+                        var pkg = "github.com/Azure/go-autorest/autorest/date";
+                        if (TemplateFactory.Instance.TemplateVersion == TemplateFactory.Version.v2)
+                        {
+                            pkg = "time";
+                        }
+                        return GetImportLine(package: pkg);
                     case KnownPrimaryType.Decimal:
                         return GetImportLine(package: "github.com/shopspring/decimal");
                     case KnownPrimaryType.Stream:
@@ -80,13 +83,34 @@ namespace AutoRest.Go.Model
                         return "bool";
 
                     case KnownPrimaryType.Date:
-                        return "date.Date";
+                        {
+                            var name = "date.Date";
+                            if (TemplateFactory.Instance.TemplateVersion == TemplateFactory.Version.v2)
+                            {
+                                name = "time.Time";
+                            }
+                            return name;
+                        }
 
                     case KnownPrimaryType.DateTime:
-                        return "date.Time";
+                        {
+                            var name = "date.Time";
+                            if (TemplateFactory.Instance.TemplateVersion == TemplateFactory.Version.v2)
+                            {
+                                name = "time.Time";
+                            }
+                            return name;
+                        }
 
                     case KnownPrimaryType.DateTimeRfc1123:
-                        return "date.TimeRFC1123";
+                        {
+                            var name = "date.TimeRFC1123";
+                            if (TemplateFactory.Instance.TemplateVersion == TemplateFactory.Version.v2)
+                            {
+                                name = "time.Time";
+                            }
+                            return name;
+                        }
 
                     case KnownPrimaryType.Double:
                         return "float64";

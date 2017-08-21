@@ -44,11 +44,6 @@ namespace AutoRest.Go
             PrimaryTypeGo.GetImportLine(package: "github.com/Azure/go-autorest/autorest/to") 
         };
 
-        public virtual IEnumerable<string> ValidationImport => new string[]
-        {
-            PrimaryTypeGo.GetImportLine(package: "github.com/Azure/go-autorest/autorest/validation")
-        };
-
         // CommonInitialisms are those "words" within a name that Golint expects to be uppercase.
         // See https://github.com/golang/lint/blob/master/lint.go for detail.
         private HashSet<string> CommonInitialisms => new HashSet<string>(StringComparer.OrdinalIgnoreCase) {

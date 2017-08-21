@@ -488,7 +488,7 @@ namespace AutoRest.Go.Model
                                  : string.Format("autorest.NewErrorWithError(err, \"{0}.{1}\", \"{2}\", {3}, \"{4}\")", PackageName, Owner, Name, response, phase);
         }
 
-        public string ValidationError => $"validation.NewErrorWithValidationError(err, \"{PackageName}.{Owner}\",\"{Name}\")";
+        public string ValidationError => $"newErrorWithValidationError(err, \"{PackageName}.{Owner}\",\"{Name}\")";
 
         /// <summary>
         /// Check if method has a return response.

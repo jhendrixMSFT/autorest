@@ -76,7 +76,6 @@ namespace AutoRest.Go.Model
             imports.UnionWith(CodeNamerGo.Instance.AutorestImports);
             imports.UnionWith(CodeNamerGo.Instance.StandardImports);
 
-            bool validationImports = false;
             bool unmarshalImports = false;
             cmg.Methods.Where(m => m.Group.Value == Name)
                 .ForEach(m =>
@@ -87,20 +86,11 @@ namespace AutoRest.Go.Model
                     {
                         mg.ReturnType.Body.AddImports(imports);
                     }
-                    if (!string.IsNullOrEmpty(mg.ParameterValidations))
-                    {
-                        validationImports = true;
-                    }
                     if (mg.ReturnValueRequiresUnmarshalling())
                     {
                         unmarshalImports = true;
                     }
                 });
-
-            if (validationImports)
-            {
-                imports.UnionWith(CodeNamerGo.Instance.ValidationImport);
-            }
 
             if (unmarshalImports)
             {

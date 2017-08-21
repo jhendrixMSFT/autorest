@@ -312,7 +312,7 @@ namespace AutoRest.Go.Model
                     x.AddRange(p.ValidateType(name, method));
 
                 if (x.Count != 0)
-                    v.Add($"{{ TargetValue: {name},\n Constraints: []validation.Constraint{{{string.Join(",\n", x)}}}}}");
+                    v.Add($"{{ targetValue: {name},\n constraints: []constraint{{{string.Join(",\n", x)}}}}}");
             }
             return string.Join(",\n", v);
         }
